@@ -65,7 +65,7 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
             y = season.split('-')[0]
             if season_axis.get_fluseason_year(pd.to_datetime(dd)) == int(y):
                 dirs_with_dates.append((dd, d))
-        dirs_with_dates = sorted(dirs_with_dates)[:]
+        dirs_with_dates = sorted(dirs_with_dates)[1:]
         if not dirs_with_dates:
             for icol in range(ncols):
                 axes2[iax][icol].text(0.5, 0.5, f"{season}: no forecasts", transform=axes2[iax][icol].transAxes, ha='center', va='center')
@@ -217,7 +217,7 @@ def plot_npy_two_panel_national(base_dir: str, model_id: str, config: str,
             y = season.split('-')[0]
             if season_axis.get_fluseason_year(pd.to_datetime(dd)) == int(y):
                 dirs_with_dates.append((dd, d))
-        dirs_with_dates = sorted(dirs_with_dates)[:]
+        dirs_with_dates = sorted(dirs_with_dates)[1:]
         if not dirs_with_dates:
             ax.set_title(f"{season}: no forecasts found")
             continue

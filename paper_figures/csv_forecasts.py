@@ -65,12 +65,14 @@ def load_flusight_ensemble_forecast(season: str, location: str, reference_date) 
     df = pd.read_csv(csv_path, dtype={"location": str})
     df["target_end_date"] = pd.to_datetime(df["target_end_date"])
     df["output_type_id"] = pd.to_numeric(df.get("output_type_id"), errors="coerce")
+    df["horizon"] = pd.to_numeric(df.get("horizon"), errors="coerce")
 
     df_median = df[
         (df["location"] == location) &
         (np.isclose(df["output_type_id"], 0.5)) &
         (df["target"] == "wk inc flu hosp") &
-        (df["output_type"] == "quantile")
+        (df["output_type"] == "quantile") &
+        (df["horizon"] >= 0)
     ].copy()
 
     return df_median.sort_values("target_end_date")
