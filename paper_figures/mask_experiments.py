@@ -15,7 +15,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from influpaint.utils import ground_truth
 from influpaint.utils.helpers import flusight_quantile_pairs
 from .helpers import state_to_code
-from .config import IMAGE_SIZE, CHANNELS, STATE_NAMES
+from .config import IMAGE_SIZE, CHANNELS
 
 
 def recreate_mask(gt: ground_truth.GroundTruth, mask_name: str):
@@ -62,8 +62,8 @@ def add_mask_heatmap_inset(ax, gt_data, mask, location_idx, P):
         location_idx: Index of the location to highlight
         P: Number of locations
     """
-    # Create square inset axis in upper left (30% bigger: 32.5%)
-    axins = inset_axes(ax, width="32.5%", height="32.5%", loc='upper left',
+    # Create square inset axis in upper left (10% bigger: 35.75%)
+    axins = inset_axes(ax, width="35.75%", height="35.75%", loc='upper left',
                       bbox_to_anchor=(0.02, 0.02, 1, 1), bbox_transform=ax.transAxes)
 
     # Crop to 52 weeks and P locations
@@ -88,8 +88,7 @@ def add_mask_heatmap_inset(ax, gt_data, mask, location_idx, P):
     axins.imshow(mask_colored, aspect='equal', origin='lower')
 
     # Highlight the current location with a red arrow pointing to it
-    # Arrow points from left side to the middle of the location row
-    arrow = mpatches.FancyArrow(-5, location_idx, 4, 0,
+    arrow = mpatches.FancyArrow(-6, location_idx, 5, 0,
                                width=0.5, head_width=1.2, head_length=1.5,
                                edgecolor='red', facecolor='red', linewidth=2)
     axins.add_patch(arrow)
@@ -98,9 +97,11 @@ def add_mask_heatmap_inset(ax, gt_data, mask, location_idx, P):
     axins.set_xticks([])
     axins.set_yticks([])
 
-    # Remove spines for cleaner look
+    # Add axis borders for better separation
     for spine in axins.spines.values():
-        spine.set_visible(False)
+        spine.set_visible(True)
+        spine.set_linewidth(1.5)
+        spine.set_edgecolor('black')
 
 
 def plot_mask_experiments(mask_dir: str, forecast_date: str,
@@ -178,22 +179,11 @@ def plot_mask_experiments(mask_dir: str, forecast_date: str,
                 plot_indices.append(gt.season_setup.locations.index(code))
             plot_indices = plot_indices[:5]
 
-        # Get full state names
-        locdf = gt.season_setup.locations_df
-        abbr_map = None
-        if 'abbreviation' in locdf.columns:
-            abbr_map = locdf.set_index('location_code')['abbreviation']
-
-        # Map to full names using STATE_NAMES
+        # Get full state names using SeasonAxis
         labels = []
         for i in plot_indices:
             loc_code = str(gt.season_setup.locations[i])
-            if abbr_map is not None:
-                abbrev = abbr_map.get(loc_code, loc_code)
-            else:
-                abbrev = loc_code
-            # Get full name from STATE_NAMES, fallback to abbreviation
-            full_name = STATE_NAMES.get(str(abbrev).upper(), str(abbrev).upper())
+            full_name = gt.season_setup.get_location_name(loc_code)
             labels.append(full_name)
 
         ncols = len(plot_indices)

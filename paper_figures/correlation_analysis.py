@@ -1,5 +1,5 @@
 """
-Functions for analyzing spatial correlation in weekly incidence data.
+Spatial correlation analysis utilities for Influpaint figures.
 """
 
 import numpy as np
@@ -8,67 +8,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Optional
 
-from influpaint.utils import SeasonAxis
 from .data_utils import normalize_samples_shape, get_real_weeks
 
 
-def compute_spatial_correlation_per_week(data: np.ndarray) -> list[float]:
-    """Compute spatial correlation for each week.
+def compute_weekly_incidence_correlation(inv_samples: np.ndarray) -> list[float]:
+    """Compute temporal correlation between each pair of states.
 
-    For each week, computes the mean pairwise correlation across all locations.
-
-    Args:
-        data: Array of shape (weeks, places) or (samples, weeks, places)
-
-    Returns:
-        List of correlation coefficients, one per week
-    """
-    if data.ndim == 2:
-        # Single sample: (weeks, places)
-        weeks, places = data.shape
-        correlations = []
-
-        for w in range(weeks):
-            week_data = data[w, :]
-            # Skip if all NaN or not enough variation
-            if np.all(np.isnan(week_data)) or np.nanstd(week_data) < 1e-6:
-                continue
-
-            # For spatial correlation, we look at correlation across locations for this week
-            # Since we have a single time point, we can't compute correlation in the traditional sense
-            # Instead, we'll use the approach of computing correlation with the mean
-            # or we can collect pairs of locations
-
-            # Alternative: for a proper spatial correlation, we should compute
-            # correlation between location time series up to this point
-            # But the user wants "weekly incidence correlation" which suggests
-            # correlation of incidence values across space for each week
-
-            # Let's use coefficient of variation or correlation with mean pattern
-            # Actually, for spatial correlation, we want correlation between locations
-            # across time. Let me rethink this.
-            pass
-
-    elif data.ndim == 3:
-        # Multiple samples: (samples, weeks, places)
-        pass
-
-    return correlations
-
-
-def compute_weekly_incidence_correlation(inv_samples: np.ndarray,
-                                         season_axis: SeasonAxis) -> list[float]:
-    """Compute weekly incidence correlation across states.
-
-    For each pair of states, compute the temporal correlation of their time series.
-    This measures spatial synchrony - how correlated different locations are with each other.
+    For each sample, we measure how similar state-level trajectories are by computing
+    the Pearson correlation between every pair of states over the real season weeks.
 
     Args:
-        inv_samples: (N, 1, weeks, places) or (N, weeks, places)
-        season_axis: SeasonAxis object
+        inv_samples: Array shaped as (N, 1, weeks, places) or (N, weeks, places).
 
     Returns:
-        List of correlation coefficients (one per state pair per sample)
+        List of correlation coefficients pooled over all samples and state pairs.
     """
     arr = normalize_samples_shape(inv_samples)
     n, c, w, p = arr.shape
@@ -107,20 +60,15 @@ def compute_weekly_incidence_correlation(inv_samples: np.ndarray,
 
 
 def compute_random_correlation(inv_samples: np.ndarray,
-                               season_axis: SeasonAxis,
                                n_permutations: int = 100) -> list[float]:
-    """Compute expected correlation at random by permuting time series.
-
-    Randomly shuffles each state's time series independently to break temporal structure
-    while preserving marginal distributions.
+    """Compute null correlations by permuting each state's time series.
 
     Args:
-        inv_samples: (N, 1, weeks, places) or (N, weeks, places)
-        season_axis: SeasonAxis object
-        n_permutations: Number of random permutations
+        inv_samples: Array shaped as (N, 1, weeks, places) or (N, weeks, places).
+        n_permutations: Number of random permutations to draw.
 
     Returns:
-        List of correlation coefficients from permuted data
+        List of correlation coefficients from permuted samples.
     """
     arr = normalize_samples_shape(inv_samples)
     n, c, w, p = arr.shape
@@ -161,19 +109,14 @@ def compute_random_correlation(inv_samples: np.ndarray,
     return correlations
 
 
-def compute_observed_correlation(season_axis: SeasonAxis,
-                                 n_seasons: int = 3) -> list[float]:
-    """Compute correlation from historical observed data.
-
-    For each pair of states, compute the temporal correlation of their time series
-    across the most recent seasons.
+def compute_observed_correlation(n_seasons: int = 3) -> list[float]:
+    """Compute state-pair correlations from historical seasons.
 
     Args:
-        season_axis: SeasonAxis object
-        n_seasons: Number of historical seasons to analyze
+        n_seasons: Number of most recent historical seasons to include.
 
     Returns:
-        List of correlation coefficients from observed data
+        List of correlation coefficients pooled across seasons and state pairs.
     """
     gt_df = pd.read_csv('influpaint/data/nhsn_flusight_past.csv')
 
@@ -217,33 +160,26 @@ def compute_observed_correlation(season_axis: SeasonAxis,
 
 
 def plot_weekly_incidence_correlation(inv_samples: np.ndarray,
-                                      season_axis: SeasonAxis,
                                       save_path: Optional[str] = None,
                                       n_permutations: int = 100) -> plt.Figure:
-    """Plot weekly incidence correlation comparison.
-
-    Creates box plots comparing:
-    1. Expected correlation at random (permuted data)
-    2. Correlation with influpaint (generated samples)
-    3. Observed correlation in historical seasons
+    """Plot pairwise state correlation comparison.
 
     Args:
-        inv_samples: (N, 1, weeks, places) or (N, weeks, places)
-        season_axis: SeasonAxis object
-        save_path: Optional path to save the figure
-        n_permutations: Number of random permutations for null distribution
+        inv_samples: (N, 1, weeks, places) or (N, weeks, places).
+        save_path: Optional path to save the figure.
+        n_permutations: Number of random permutations for the null distribution.
 
     Returns:
-        matplotlib Figure object
+        Matplotlib Figure object.
     """
     print("Computing random correlations...")
-    random_corr = compute_random_correlation(inv_samples, season_axis, n_permutations)
+    random_corr = compute_random_correlation(inv_samples, n_permutations)
 
     print("Computing influpaint correlations...")
-    influpaint_corr = compute_weekly_incidence_correlation(inv_samples, season_axis)
+    influpaint_corr = compute_weekly_incidence_correlation(inv_samples)
 
     print("Computing observed correlations...")
-    observed_corr = compute_observed_correlation(season_axis)
+    observed_corr = compute_observed_correlation()
 
     # Prepare data for box plot
     data = []
@@ -256,33 +192,29 @@ def plot_weekly_incidence_correlation(inv_samples: np.ndarray,
 
     df = pd.DataFrame(data)
 
-    # Create figure with vertical box plots
     fig, ax = plt.subplots(figsize=(8, 6), dpi=200)
 
-    # Create vertical box plot
-    sns.boxplot(data=df, x='Category', y='Correlation', ax=ax,
-                order=['Expected at random', 'Influpaint', 'Observed'],
-                palette=['lightgray', 'skyblue', 'salmon'])
-
-    # Add individual points with high alpha (very transparent)
-    sns.stripplot(data=df, x='Category', y='Correlation', ax=ax,
-                  order=['Expected at random', 'Influpaint', 'Observed'],
-                  color='black', alpha=0.05, size=2, jitter=True)
+    sns.boxplot(
+        data=df,
+        x='Category',
+        y='Correlation',
+        ax=ax,
+        order=['Expected at random', 'Influpaint', 'Observed'],
+        palette=['lightgray', 'skyblue', 'salmon'],
+        showfliers=False,
+    )
 
     ax.set_xlabel('', fontsize=13)
-    ax.set_ylabel('Weekly incidence correlation (across states)', fontsize=13)
-    ax.set_title('Spatial correlation of influenza incidence', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Correlation across U.S. states', fontsize=13)
     ax.grid(True, alpha=0.3, axis='y')
     sns.despine(ax=ax, trim=True)
 
-    # Add statistics
+    # Report summary statistics to stdout
     for i, category in enumerate(['Expected at random', 'Influpaint', 'Observed']):
         cat_data = df[df['Category'] == category]['Correlation']
         median = cat_data.median()
         mean = cat_data.mean()
-        ax.text(i, ax.get_ylim()[1] * 0.95, f'Med: {median:.3f}\nMean: {mean:.3f}',
-                ha='center', va='top', fontsize=9,
-                bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', pad=2))
+        print(f"{category}: mean={mean:.3f}, median={median:.3f}, n={len(cat_data)}")
 
     fig.tight_layout()
 

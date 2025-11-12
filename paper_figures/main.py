@@ -287,7 +287,6 @@ def generate_correlation_figures(season_axis, uncond_samples):
     # Weekly incidence correlation
     fig_correlation = correlation_analysis.plot_weekly_incidence_correlation(
         inv_samples=uncond_samples,
-        season_axis=season_axis,
         save_path=os.path.join(FIG_DIR, f"{_MODEL_NUM}_weekly_incidence_correlation.png"),
         n_permutations=100,
     )
