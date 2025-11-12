@@ -258,16 +258,19 @@ def compute_historical_peak_threshold(season_axis: SeasonAxis,
 
 def filter_trajectories_by_peak(samples: np.ndarray,
                                   season_axis: SeasonAxis,
-                                  peak_thresholds: np.ndarray) -> np.ndarray:
+                                  peak_thresholds: np.ndarray,
+                                  max_low_locations: int = 10) -> np.ndarray:
     """Filter trajectories to remove those with unrealistically low peaks.
 
     For each trajectory and location, finds the maximum value (peak) for that location.
-    Removes trajectories where ANY location has a peak below that location's threshold.
+    Removes trajectories where more than max_low_locations have peaks below threshold.
 
     Args:
         samples: Array of shape (N, C, W, P) or (N, W, P)
         season_axis: SeasonAxis object
         peak_thresholds: Array of minimum allowed peak values per location (shape: num_locations,)
+        max_low_locations: Maximum number of locations allowed to have peaks below threshold
+                          before removing trajectory (default: 10)
 
     Returns:
         Filtered array with same shape but potentially fewer samples (N_filtered, C, W, P)
@@ -279,17 +282,23 @@ def filter_trajectories_by_peak(samples: np.ndarray,
 
     # Check each trajectory
     keep_mask = np.ones(n, dtype=bool)
+    low_location_counts = []
 
     for sample_idx in range(n):
-        # For each location, check if peak is above threshold
+        # Count how many locations have peaks below threshold
+        n_low_locations = 0
         for loc_idx in range(num_locations):
             location_data = arr[sample_idx, 0, :real_weeks, loc_idx]
             location_peak = np.max(location_data)
 
-            # Remove trajectory if ANY location has peak below threshold
             if location_peak < peak_thresholds[loc_idx]:
-                keep_mask[sample_idx] = False
-                break  # No need to check other locations for this sample
+                n_low_locations += 1
+
+        low_location_counts.append(n_low_locations)
+
+        # Remove trajectory if MORE than max_low_locations have low peaks
+        if n_low_locations > max_low_locations:
+            keep_mask[sample_idx] = False
 
     filtered_samples = arr[keep_mask]
 
@@ -297,16 +306,20 @@ def filter_trajectories_by_peak(samples: np.ndarray,
     n_removed = n - filtered_samples.shape[0]
     print(f"Trajectory filtering by peak (removing blank/low trajectories):")
     print(f"  Original trajectories: {n}")
+    print(f"  Max locations allowed below threshold: {max_low_locations}")
     print(f"  Trajectories removed: {n_removed} ({100*n_removed/n:.1f}%)")
     print(f"  Trajectories kept: {filtered_samples.shape[0]} ({100*filtered_samples.shape[0]/n:.1f}%)")
 
     if filtered_samples.shape[0] > 0:
         # Show peak stats for kept trajectories
         kept_peaks = []
-        for sample_idx in range(filtered_samples.shape[0]):
-            max_peak = np.max(filtered_samples[sample_idx, 0, :real_weeks, :num_locations])
+        kept_low_counts = []
+        for idx, sample_idx in enumerate(np.where(keep_mask)[0]):
+            max_peak = np.max(arr[sample_idx, 0, :real_weeks, :num_locations])
             kept_peaks.append(max_peak)
+            kept_low_counts.append(low_location_counts[sample_idx])
         print(f"  Peak range in kept trajectories: [{np.min(kept_peaks):.2f}, {np.max(kept_peaks):.2f}]")
+        print(f"  Low location count in kept trajectories: [{np.min(kept_low_counts)}, {np.max(kept_low_counts)}] (mean: {np.mean(kept_low_counts):.1f})")
 
     return filtered_samples
 

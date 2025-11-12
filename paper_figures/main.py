@@ -17,7 +17,7 @@ from influpaint.utils import SeasonAxis
 # Import configuration
 from .config import (
     FIG_DIR, BEST_MODEL_ID, BEST_CONFIG, UNCOND_SAMPLES_PATH,
-    INPAINTING_BASE, PLOT_MEDIAN, _MODEL_NUM
+    INPAINTING_BASE, PLOT_MEDIAN, _MODEL_NUM, MAX_LOW_LOCATIONS
 )
 
 # Import helper functions
@@ -339,7 +339,8 @@ def main():
     uncond_samples_filtered = filter_trajectories_by_peak(
         uncond_samples,
         season_axis,
-        peak_thresholds
+        peak_thresholds,
+        max_low_locations=MAX_LOW_LOCATIONS
     )
 
     # Generate all figure types using filtered samples

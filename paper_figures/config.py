@@ -21,6 +21,9 @@ CHANNELS = 1
 # Plotting options
 PLOT_MEDIAN = True
 
+# Trajectory filtering options
+MAX_LOW_LOCATIONS = 10  # Max number of locations allowed to have peaks below threshold
+
 # Model configuration
 BEST_MODEL_ID = "i868"
 BEST_CONFIG = "celebahq_noTTJ5"
