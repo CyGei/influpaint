@@ -347,32 +347,33 @@ def main():
         generate_unconditional_figures(season_axis, uncond_samples_filtered)
     except Exception as e:
         print(f"Error generating unconditional figures: {e}")
+        raise ValueError("")
 
     try:
         generate_peak_analysis_figures(season_axis, uncond_samples_filtered)
     except Exception as e:
         print(f"Error generating peak analysis figures: {e}")
-
+        raise ValueError("")
     try:
         generate_correlation_figures(season_axis, uncond_samples_filtered)
     except Exception as e:
         print(f"Error generating correlation figures: {e}")
-
+        raise ValueError("")
     try:
         generate_csv_forecast_figures(season_axis)
     except Exception as e:
         print(f"Error generating CSV forecast figures: {e}")
-
+        raise ValueError("")
     try:
         generate_npy_forecast_figures(season_axis)
     except Exception as e:
         print(f"Error generating NPY forecast figures: {e}")
-
+        raise ValueError("")
     try:
         generate_mask_experiment_figures()
     except Exception as e:
         print(f"Error generating mask experiment figures: {e}")
-
+        raise ValueError("")
     print("\n" + "="*60)
     print("Figure generation complete!")
     print(f"All figures saved to: {FIG_DIR}")

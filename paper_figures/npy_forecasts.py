@@ -45,7 +45,7 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
     """
     states = state if isinstance(state, (list, tuple)) else [state]
     nrows, ncols = len(seasons), len(states)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False, sharex=True)
     # Normalize axes to 2D array shape (nrows, ncols)
     if nrows == 1 and ncols == 1:
         axes2 = np.array([[axes]])
@@ -159,8 +159,9 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
                 ax.text(rdt, ax.get_ylim()[1]*0.95, str(rdt.date()), color=palette[i], rotation=90,
                         ha='right', va='top', fontsize=8,
                         bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
-            # Style
-            ax.text(0.02, 0.98, st.upper(), transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+            # Style - use full location name from SeasonAxis
+            full_name = season_axis.get_location_name(loc_code)
+            ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
             ax.set_ylim(bottom=0)
             ax.grid(True, alpha=0.3)
             sns.despine(ax=ax, trim=True)
@@ -203,7 +204,7 @@ def plot_npy_two_panel_national(base_dir: str, model_id: str, config: str,
     Returns:
         matplotlib Figure object
     """
-    fig, axes = plt.subplots(1, len(seasons), figsize=(14, 5), dpi=200, sharey=False)
+    fig, axes = plt.subplots(1, len(seasons), figsize=(14, 5), dpi=200, sharey=False, sharex=True)
     if len(seasons) == 1:
         axes = [axes]
     for iax, season in enumerate(seasons):

@@ -17,7 +17,6 @@ from .data_utils import (
     get_state_labels
 )
 from .helpers import state_to_code
-from .config import STATE_NAMES
 
 
 def plot_unconditional_states_quantiles_and_trajs(inv_samples: np.ndarray,
@@ -48,7 +47,7 @@ def plot_unconditional_states_quantiles_and_trajs(inv_samples: np.ndarray,
     ncols = n_states if n_states <= 5 else int(np.ceil(n_states / 2))
     nrows = 1 if n_states <= 5 else 2
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False, sharex=True)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
     for i, st in enumerate(states):
@@ -72,8 +71,10 @@ def plot_unconditional_states_quantiles_and_trajs(inv_samples: np.ndarray,
             med = compute_median(ts)
             ax.plot(weeks, med, color=color, lw=1.8, zorder=2)
 
-        # Styling
-        ax.text(0.02, 0.98, st.upper(), transform=ax.transAxes, va='top', ha='left',
+        # Styling - use full location name from SeasonAxis
+        loc_code = state_to_code(st, season_axis)
+        full_name = season_axis.get_location_name(loc_code)
+        ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left',
                 fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
         ax.set_xlim(1, real_weeks)
         ax.set_ylim(bottom=0)
@@ -336,7 +337,7 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
     n_states = len(states)
     ncols = min(3, n_states)
     nrows = int(np.ceil(n_states / ncols))
-    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False, sharex=True)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
     # Load historical data (excluding 2021-2022 season due to incomplete data)
@@ -387,7 +388,7 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
                            color='black', lw=2.0, alpha=0.9, ls=ls, zorder=10,
                            label=season_key if i == 0 else None)
 
-        state_name = STATE_NAMES.get(st.upper(), st.upper())
+        state_name = season_axis.get_location_name(loc_code)
         ax.text(0.02, 0.98, state_name, transform=ax.transAxes, va='top', ha='left',
                 fontsize=12, fontweight='bold',
                 bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
@@ -401,8 +402,6 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax, trim=True)
 
-        if i == 0:
-            ax.legend(loc='upper right', fontsize=8, framealpha=0.8)
 
     for j in range(len(axes_list)):
         if j >= n_states:
@@ -424,7 +423,7 @@ def add_trajectory_inset(ax, weeks, trajectories, color):
         color: Color for the trajectories
     """
     # Create inset axis in upper right (50% bigger: 48.75% size)
-    axins = inset_axes(ax, width="48.75%", height="48.75%", loc='upper right',
+    axins = inset_axes(ax, width="43%", height="43%", loc='upper right',
                       bbox_to_anchor=(0, 0, 0.98, 0.98), bbox_transform=ax.transAxes)
 
     # Plot all trajectories
@@ -479,7 +478,7 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
     n_states = len(states)
     ncols = min(3, n_states)
     nrows = int(np.ceil(n_states / ncols))
-    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False, sharex=True)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
     # Load historical data (excluding 2021-2022 season due to incomplete data)
@@ -531,7 +530,7 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
         inset_trajectories = ts[traj_indices]
         add_trajectory_inset(ax, weeks, inset_trajectories, color)
 
-        state_name = STATE_NAMES.get(st.upper(), st.upper())
+        state_name = season_axis.get_location_name(loc_code)
         ax.text(0.02, 0.98, state_name, transform=ax.transAxes, va='top', ha='left',
                 fontsize=12, fontweight='bold',
                 bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
@@ -545,8 +544,6 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax, trim=True)
 
-        if i == 0:
-            ax.legend(loc='center left', fontsize=8, framealpha=0.8)
 
     for j in range(len(axes_list)):
         if j >= n_states:
@@ -580,7 +577,7 @@ def plot_unconditional_states_with_history_alt(inv_samples: np.ndarray,
     n_states = len(states)
     ncols = min(3, n_states)
     nrows = int(np.ceil(n_states / ncols))
-    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False, sharex=True)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
     # Load historical data (excluding 2021-2022 season due to incomplete data)
@@ -624,7 +621,7 @@ def plot_unconditional_states_with_history_alt(inv_samples: np.ndarray,
                            color='black', lw=2.0, alpha=0.9, ls=ls, zorder=10,
                            label=season_key if i == 0 else None)
 
-        state_name = STATE_NAMES.get(st.upper(), st.upper())
+        state_name = season_axis.get_location_name(loc_code)
         ax.text(0.02, 0.98, state_name, transform=ax.transAxes, va='top', ha='left',
                 fontsize=12, fontweight='bold',
                 bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
@@ -638,8 +635,6 @@ def plot_unconditional_states_with_history_alt(inv_samples: np.ndarray,
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax, trim=True)
 
-        if i == 0:
-            ax.legend(loc='upper right', fontsize=8, framealpha=0.8)
 
     for j in range(len(axes_list)):
         if j >= n_states:

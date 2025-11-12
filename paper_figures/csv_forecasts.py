@@ -193,7 +193,9 @@ def plot_csv_quantile_fans_for_season(season: str, base_dir: str, model_id: str,
                     mask = (x >= np.datetime64(left_bound)) & (x <= np.datetime64(right_bound))
                     if np.any(mask):
                         ax.plot(x[mask], ensemble["value"].values[mask], color='#333333', lw=2, ls=':', label='FluSight-ensemble' if j == 0 else '')
-        ax.text(0.02, 0.98, st.upper(), transform=ax.transAxes, va='top', ha='left',
+        # Use full location name
+        full_name = "United States" if loc_code == 'US' else season_axis.get_location_name(loc_code)
+        ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left',
                                fontsize=11, fontweight='bold',
                                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
         ax.set_ylim(bottom=0)
@@ -206,8 +208,6 @@ def plot_csv_quantile_fans_for_season(season: str, base_dir: str, model_id: str,
         sns.despine(ax=ax, trim=True)
         ax.set_xlim(left_bound, right_bound)
         format_date_axis(ax)
-        if plot_flusight_ensemble:
-            ax.legend(loc='upper right', framealpha=0.9)
 
     fig.tight_layout()
     if save_path:
@@ -333,16 +333,15 @@ def plot_csv_quantile_fans_multiseasons(seasons: list, base_dir: str, model_id: 
                         ax.plot(x, ensemble["value"].values, color='#333333', lw=2, ls=':', label='FluSight-ensemble' if i == 0 else '')
                         break
 
-        # Styling
-        ax.text(0.02, 0.98, st.upper(), transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+        # Styling - use full location name from SeasonAxis
+        full_name = season_axis.get_location_name(loc_code)
+        ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
         ax.set_ylim(bottom=0)
         ax.set_xlim(x_left, x_right)
         ax.set_xlabel('Date')
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax, trim=True)
         format_date_axis(ax)
-        if plot_flusight_ensemble:
-            ax.legend(loc='upper right', framealpha=0.9)
     fig.tight_layout()
     if save_path:
         fig.savefig(save_path, dpi=300, bbox_inches='tight')

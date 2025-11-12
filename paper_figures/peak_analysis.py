@@ -12,7 +12,6 @@ from scipy.stats import gaussian_kde
 from influpaint.utils import SeasonAxis
 from .data_utils import normalize_samples_shape, get_real_weeks, get_state_timeseries
 from .helpers import state_to_code
-from .config import STATE_NAMES
 
 
 def plot_peak_distributions_comparison(inv_samples: np.ndarray,
@@ -112,7 +111,6 @@ def plot_peak_distributions_comparison(inv_samples: np.ndarray,
     axes[0].set_xlabel('Peak timing (season week)')
     axes[0].set_ylabel('Density')
     axes[0].set_xlim(1, real_weeks)
-    axes[0].legend(loc='upper left', fontsize=9, framealpha=0.9)
     axes[0].grid(True, alpha=0.3)
     sns.despine(ax=axes[0], trim=True)
 
@@ -234,8 +232,6 @@ def plot_peak_distributions_by_location(inv_samples: np.ndarray,
         ax_timing.set_xlabel('Peak timing (season week)')
         ax_timing.set_ylabel('Density')
         ax_timing.set_xlim(1, real_weeks)
-        if i_state == 0:
-            ax_timing.legend(loc='upper left', fontsize=9, framealpha=0.9)
         ax_timing.grid(True, alpha=0.3)
         sns.despine(ax=ax_timing, trim=True)
 
@@ -380,8 +376,8 @@ def plot_peak_distributions_by_metric(inv_samples: np.ndarray,
             ax.grid(True, alpha=0.3)
             sns.despine(ax=ax, trim=True, bottom=True)
 
-        # Set title
-        state_name = STATE_NAMES.get(state.upper(), state.upper())
+        # Set title - use full location name from SeasonAxis
+        state_name = season_axis.get_location_name(loc_code)
         if state_idx == 0:
             metric_title = 'Peak timing' if metric == 'timing' else 'Peak size'
             ax.set_title(f'{metric_title}\n{state_name}', fontsize=12, fontweight='bold')

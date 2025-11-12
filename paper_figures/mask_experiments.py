@@ -81,16 +81,16 @@ def add_mask_heatmap_inset(ax, gt_data, mask, location_idx, P):
                 # Green for truth/kept data
                 mask_colored[p, w] = [0, 1, 0, 0.3]
             else:
-                # Yellow for masked/hidden data
-                mask_colored[p, w] = [1, 1, 0, 0.3]
+                # red for masked/hidden data
+                mask_colored[p, w] = [1, 0, 0, 0.3]
 
     # Overlay mask with alpha transparency
     axins.imshow(mask_colored, aspect='equal', origin='lower')
 
     # Highlight the current location with a red arrow pointing to it
-    arrow = mpatches.FancyArrow(-6, location_idx, 5, 0,
-                               width=0.5, head_width=1.2, head_length=1.5,
-                               edgecolor='red', facecolor='red', linewidth=2)
+    arrow = mpatches.FancyArrow(-3, location_idx, 20, 0,
+                               width=2, head_width=3.6, head_length=4.5,
+                               edgecolor='white', facecolor='indigo', linewidth=.5)
     axins.add_patch(arrow)
 
     # Minimal labels
@@ -187,7 +187,7 @@ def plot_mask_experiments(mask_dir: str, forecast_date: str,
             labels.append(full_name)
 
         ncols = len(plot_indices)
-        fig, axes = plt.subplots(1, ncols, figsize=(5*ncols, 4.5), dpi=200)
+        fig, axes = plt.subplots(1, ncols, figsize=(5*ncols, 4.5), dpi=200, sharex=True)
         if ncols == 1:
             axes = [axes]
 
