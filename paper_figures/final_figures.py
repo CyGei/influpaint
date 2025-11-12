@@ -18,7 +18,7 @@ from .config import (
 )
 
 # Output directory for final figures
-FIG_DIR = "influpaint-paper/figure/generated"
+FIG_DIR = "influpaint-paper/figures/generated"
 os.makedirs(FIG_DIR, exist_ok=True)
 
 from .helpers import load_unconditional_samples

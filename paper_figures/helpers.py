@@ -22,11 +22,11 @@ def forecast_week_saturdays(season: str, season_axis: SeasonAxis, max_weeks: int
 
 
 def format_date_axis(ax):
-    """Apply YYYY-MM date format and tilt labels to avoid overlap."""
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+    """Apply Dec 2025 date format and tilt labels to avoid overlap."""
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
     for label in ax.get_xticklabels():
-        label.set_rotation(30)
+        label.set_rotation(45)
         label.set_horizontalalignment('right')
 
 

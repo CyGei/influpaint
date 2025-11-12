@@ -10,12 +10,15 @@ paper_figures/
 ├── README.md                     # This file
 ├── config.py                     # Configuration and constants
 ├── helpers.py                    # Utility/helper functions
+├── data_utils.py                 # Data preprocessing utilities
 ├── unconditional_figures.py      # Unconditional generation figures
+├── correlation_analysis.py       # Spatial correlation analysis
 ├── peak_analysis.py              # Peak distribution analysis
 ├── csv_forecasts.py              # CSV forecast quantile fans
 ├── npy_forecasts.py              # NPY full-horizon forecasts
 ├── mask_experiments.py           # Mask experiment visualizations
-└── main.py                       # Main orchestration script
+├── main.py                       # Main orchestration script
+└── final_figures.py              # Final paneled figures for paper
 ```
 
 ## Module Descriptions
@@ -77,6 +80,14 @@ Main orchestration script that:
 - Handles errors gracefully
 - Provides progress feedback
 
+### final_figures.py
+Generates final paneled figures for paper publication by composing existing plotting functions:
+- `figure1_unconditional_with_correlation()` - Unconditional generation with correlation analysis
+- `figure2_csv_forecasts_two_seasons()` - CSV forecasts for two seasons in 4x2 layout
+- `figure3_npy_forecasts_two_seasons()` - NPY forecasts with A/B panel labels
+- `figure4_mask_experiments()` - Multi-panel mask experiments figure
+- `add_panel_label()` - Utility to add A, B, C labels to panels
+
 ## Usage
 
 ### Generate All Figures
@@ -85,6 +96,18 @@ Main orchestration script that:
 from paper_figures.main import main
 main()
 ```
+
+### Generate Final Paneled Figures
+
+```bash
+python -m paper_figures.final_figures
+```
+
+This generates the final multi-panel figures for the paper:
+- **Figure 1**: Unconditional generation (excluding NC) + correlation analysis
+- **Figure 2**: CSV forecasts for 2023-2024 and 2024-2025 seasons (4 states × 2 seasons)
+- **Figure 3**: NPY forecasts for two seasons with A/B labels (excluding NC)
+- **Figure 4**: Mask experiments with multiple panels (CA/KY/MD + NC/IL)
 
 ### Generate Specific Figure Types
 
