@@ -254,25 +254,23 @@ def plot_weekly_incidence_correlation(inv_samples: np.ndarray,
 
     df = pd.DataFrame(data)
 
-    # Create figure with horizontal box plots
-    fig, ax = plt.subplots(figsize=(10, 5), dpi=200)
+    # Create figure with vertical box plots
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=200)
 
-    # Create horizontal box plot
-    sns.boxplot(data=df, y='Category', x='Correlation', ax=ax,
+    # Create vertical box plot
+    sns.boxplot(data=df, x='Category', y='Correlation', ax=ax,
                 order=['Expected at random', 'Influpaint', 'Observed'],
-                palette=['lightgray', 'skyblue', 'salmon'],
-                orient='h')
+                palette=['lightgray', 'skyblue', 'salmon'])
 
     # Add individual points with high alpha (very transparent)
-    sns.stripplot(data=df, y='Category', x='Correlation', ax=ax,
+    sns.stripplot(data=df, x='Category', y='Correlation', ax=ax,
                   order=['Expected at random', 'Influpaint', 'Observed'],
-                  color='black', alpha=0.05, size=2, jitter=True,
-                  orient='h')
+                  color='black', alpha=0.05, size=2, jitter=True)
 
-    ax.set_ylabel('', fontsize=13)
-    ax.set_xlabel('Weekly incidence correlation (across states)', fontsize=13)
+    ax.set_xlabel('', fontsize=13)
+    ax.set_ylabel('Weekly incidence correlation (across states)', fontsize=13)
     ax.set_title('Spatial correlation of influenza incidence', fontsize=14, fontweight='bold')
-    ax.grid(True, alpha=0.3, axis='x')
+    ax.grid(True, alpha=0.3, axis='y')
     sns.despine(ax=ax, trim=True)
 
     # Add statistics
@@ -280,8 +278,8 @@ def plot_weekly_incidence_correlation(inv_samples: np.ndarray,
         cat_data = df[df['Category'] == category]['Correlation']
         median = cat_data.median()
         mean = cat_data.mean()
-        ax.text(ax.get_xlim()[1] * 0.95, i, f'Med: {median:.3f}\nMean: {mean:.3f}',
-                ha='right', va='center', fontsize=9,
+        ax.text(i, ax.get_ylim()[1] * 0.95, f'Med: {median:.3f}\nMean: {mean:.3f}',
+                ha='center', va='top', fontsize=9,
                 bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', pad=2))
 
     fig.tight_layout()
