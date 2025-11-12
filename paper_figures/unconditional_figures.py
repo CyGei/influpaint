@@ -412,47 +412,58 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
     return fig
 
 
-def add_trajectory_inset(ax, weeks, trajectory, color):
-    """Add a small inset showing a single trajectory.
+def add_trajectory_inset(ax, weeks, trajectories, color):
+    """Add a small inset showing multiple trajectories.
 
     Args:
         ax: Matplotlib axis to add inset to
         weeks: Array of week numbers
-        trajectory: Single trajectory to plot
-        color: Color for the trajectory
+        trajectories: Array of trajectories to plot (n_trajectories, n_weeks)
+        color: Color for the trajectories
     """
-    # Create inset axis in upper left (30% size)
-    axins = inset_axes(ax, width="32.5%", height="32.5%", loc='upper left',
-                      bbox_to_anchor=(0.02, 0.02, 1, 1), bbox_transform=ax.transAxes)
+    # Create inset axis in upper right (50% bigger: 48.75% size)
+    axins = inset_axes(ax, width="48.75%", height="48.75%", loc='upper right',
+                      bbox_to_anchor=(0, 0, 0.98, 0.98), bbox_transform=ax.transAxes)
 
-    # Plot the trajectory
-    axins.plot(weeks, trajectory, color=color, lw=2.0, alpha=0.9)
+    # Plot all trajectories
+    for trajectory in trajectories:
+        axins.plot(weeks, trajectory, color=color, lw=1.5, alpha=0.7)
+
+    # Calculate ylim based on all trajectories
+    all_max = np.max(trajectories)
     axins.set_xlim(weeks[0], weeks[-1])
-    axins.set_ylim(bottom=0, top=trajectory.max() * 1.1)
+    axins.set_ylim(bottom=0, top=all_max * 1.1)
 
-    # Minimal styling
-    axins.set_xticks([])
-    axins.set_yticks([])
+    # Add 3 ticks on x and y axes
+    x_ticks = [weeks[0], weeks[len(weeks)//2], weeks[-1]]
+    axins.set_xticks(x_ticks)
+    axins.set_xticklabels([str(int(t)) for t in x_ticks], fontsize=8)
+
+    y_max = all_max * 1.1
+    y_ticks = [0, y_max/2, y_max]
+    axins.set_yticks(y_ticks)
+    axins.set_yticklabels([f'{int(t)}' for t in y_ticks], fontsize=8)
+
     axins.grid(True, alpha=0.3)
 
-    # Remove spines for cleaner look
+    # Keep spines visible for clarity with ticks
     for spine in axins.spines.values():
-        spine.set_visible(False)
+        spine.set_linewidth(0.5)
 
 
 def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
                                                    season_axis: SeasonAxis,
                                                    states: list[str],
-                                                   trajectory_idx: int = 0,
+                                                   n_inset_trajs: int = 3,
                                                    plot_median: bool = False,
                                                    save_path: str | None = None):
-    """Plot unconditional samples with historical data and a single trajectory in an inset.
+    """Plot unconditional samples with historical data and sample trajectories in an inset.
 
     Args:
         inv_samples: (N, 1, weeks, places) or (N, weeks, places)
         season_axis: SeasonAxis object
         states: list of state codes/abbrevs
-        trajectory_idx: which sample trajectory to show in inset
+        n_inset_trajs: number of sample trajectories to show in inset
         plot_median: whether to plot median on main graph
         save_path: optional path to save the figure
 
@@ -504,13 +515,17 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
                 gt_series = season_data[loc_code].dropna()
                 if not gt_series.empty:
                     ls = line_styles[j % len(line_styles)]
+                    # Create full season label (e.g., "2021-2022")
+                    season_label = f"{season_key}-{int(season_key)+1}" if i == 0 else None
                     ax.plot(gt_series.index, gt_series.values,
                            color='black', lw=2.0, alpha=0.9, ls=ls, zorder=10,
-                           label=season_key if i == 0 else None)
+                           label=season_label)
 
-        # Add trajectory inset
-        traj_idx = min(trajectory_idx, ts.shape[0] - 1)
-        add_trajectory_inset(ax, weeks, ts[traj_idx], color)
+        # Add trajectory inset with multiple trajectories
+        n_trajs = min(n_inset_trajs, ts.shape[0])
+        traj_indices = np.linspace(0, ts.shape[0]-1, num=n_trajs, dtype=int)
+        inset_trajectories = ts[traj_indices]
+        add_trajectory_inset(ax, weeks, inset_trajectories, color)
 
         state_name = STATE_NAMES.get(st.upper(), st.upper())
         ax.text(0.02, 0.98, state_name, transform=ax.transAxes, va='top', ha='left',
@@ -527,7 +542,7 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
         sns.despine(ax=ax, trim=True)
 
         if i == 0:
-            ax.legend(loc='upper right', fontsize=8, framealpha=0.8)
+            ax.legend(loc='center left', fontsize=8, framealpha=0.8)
 
     for j in range(len(axes_list)):
         if j >= n_states:
