@@ -28,6 +28,8 @@ nav:
       - Training: architecture/training.md
       - Inpainting: architecture/inpainting.md
   - Workflows:
+      - Compiling Data Sources: workflows/compiling-data-sources.md
+      - Build Training Datasets: workflows/build-training-datasets.md
       - Training Workflow: workflows/training.md
       - Inpainting Workflow: workflows/inpainting.md
       - Evaluation: workflows/evaluation.md
