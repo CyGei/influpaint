@@ -106,7 +106,7 @@ def generate_unconditional_figures(season_axis, uncond_samples):
         inv_samples=uncond_samples,
         season_axis=season_axis,
         states=['NC', 'CA', 'NY', 'TX', 'FL', 'MT'],
-        trajectory_idx=0,
+        n_inset_trajs=3,
         plot_median=False,
         save_path=os.path.join(FIG_DIR, f"{_MODEL_NUM}_uncond_states_with_history_inlet.png"),
     )
