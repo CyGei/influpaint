@@ -334,7 +334,7 @@ def main():
     peak_thresholds = compute_historical_peak_threshold(
         season_axis=season_axis,
         seasons=[2022, 2023, 2024],
-        threshold_fraction=0.2
+        threshold_fraction=0.1,
     )
     uncond_samples_filtered = filter_trajectories_by_peak(
         uncond_samples,
