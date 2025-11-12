@@ -203,7 +203,6 @@ def plot_csv_quantile_fans_for_season(season: str, base_dir: str, model_id: str,
             ax.set_ylabel('Incident flu hospitalizations')
         else:
             ax.set_ylabel('')
-        ax.set_xlabel('Date')
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax, trim=True)
         ax.set_xlim(left_bound, right_bound)
@@ -338,7 +337,6 @@ def plot_csv_quantile_fans_multiseasons(seasons: list, base_dir: str, model_id: 
         ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
         ax.set_ylim(bottom=0)
         ax.set_xlim(x_left, x_right)
-        ax.set_xlabel('Date')
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax, trim=True)
         format_date_axis(ax)

@@ -396,7 +396,6 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
         ax.set_ylim(bottom=0)
         ax.set_xticks([month_weeks[j] for j in range(0, len(month_weeks), 2)])
         ax.set_xticklabels([month_labels[j] for j in range(0, len(month_labels), 2)])
-        ax.set_xlabel('Season month')
         if i % ncols == 0:
             ax.set_ylabel('Incidence')
         ax.grid(True, alpha=0.3)
@@ -538,7 +537,6 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
         ax.set_ylim(bottom=0)
         ax.set_xticks([month_weeks[j] for j in range(0, len(month_weeks), 2)])
         ax.set_xticklabels([month_labels[j] for j in range(0, len(month_labels), 2)])
-        ax.set_xlabel('Season month')
         if i % ncols == 0:
             ax.set_ylabel('Incidence')
         ax.grid(True, alpha=0.3)
@@ -629,7 +627,6 @@ def plot_unconditional_states_with_history_alt(inv_samples: np.ndarray,
         ax.set_ylim(bottom=0)
         ax.set_xticks([month_weeks[j] for j in range(0, len(month_weeks), 2)])
         ax.set_xticklabels([month_labels[j] for j in range(0, len(month_labels), 2)])
-        ax.set_xlabel('Season month')
         if i % ncols == 0:
             ax.set_ylabel('Incidence')
         ax.grid(True, alpha=0.3)

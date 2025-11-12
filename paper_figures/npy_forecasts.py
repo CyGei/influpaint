@@ -45,7 +45,7 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
     """
     states = state if isinstance(state, (list, tuple)) else [state]
     nrows, ncols = len(seasons), len(states)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False, sharex=True)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False, sharex=False)
     # Normalize axes to 2D array shape (nrows, ncols)
     if nrows == 1 and ncols == 1:
         axes2 = np.array([[axes]])
@@ -159,8 +159,8 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
                 ax.text(rdt, ax.get_ylim()[1]*0.95, str(rdt.date()), color=palette[i], rotation=90,
                         ha='right', va='top', fontsize=8,
                         bbox=dict(facecolor='white', alpha=0.6, edgecolor='none'))
-            # Style - use full location name from SeasonAxis
-            full_name = season_axis.get_location_name(loc_code)
+            # Style - use full location name
+            full_name = "United States" if loc_code == 'US' else season_axis.get_location_name(loc_code)
             ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
             ax.set_ylim(bottom=0)
             ax.grid(True, alpha=0.3)
@@ -169,7 +169,6 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
                 ax.set_ylabel('Incident flu hospitalizations')
             else:
                 ax.set_ylabel('')
-            ax.set_xlabel('Date')
             # Use fixed bounds per season
             ax.set_xlim(left_bound, right_bound)
             format_date_axis(ax)
@@ -204,7 +203,7 @@ def plot_npy_two_panel_national(base_dir: str, model_id: str, config: str,
     Returns:
         matplotlib Figure object
     """
-    fig, axes = plt.subplots(1, len(seasons), figsize=(14, 5), dpi=200, sharey=False, sharex=True)
+    fig, axes = plt.subplots(1, len(seasons), figsize=(14, 5), dpi=200, sharey=False, sharex=False)
     if len(seasons) == 1:
         axes = [axes]
     for iax, season in enumerate(seasons):
@@ -287,7 +286,6 @@ def plot_npy_two_panel_national(base_dir: str, model_id: str, config: str,
         sns.despine(ax=ax, trim=True)
         if iax == 0:
             ax.set_ylabel('Incidence')
-        ax.set_xlabel('Date')
         ax.set_xlim(left_bound, right_bound)
         format_date_axis(ax)
     fig.tight_layout()
