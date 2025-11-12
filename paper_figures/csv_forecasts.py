@@ -192,7 +192,7 @@ def plot_csv_quantile_fans_for_season(season: str, base_dir: str, model_id: str,
                     x = ensemble["target_end_date"].values
                     mask = (x >= np.datetime64(left_bound)) & (x <= np.datetime64(right_bound))
                     if np.any(mask):
-                        ax.plot(x[mask], ensemble["value"].values[mask], color='red', lw=2, label='FluSight-ensemble' if j == 0 else '')
+                        ax.plot(x[mask], ensemble["value"].values[mask], color='#333333', lw=2, ls=':', label='FluSight-ensemble' if j == 0 else '')
         ax.text(0.02, 0.98, st.upper(), transform=ax.transAxes, va='top', ha='left',
                                fontsize=11, fontweight='bold',
                                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
@@ -330,7 +330,7 @@ def plot_csv_quantile_fans_multiseasons(seasons: list, base_dir: str, model_id: 
                     ensemble = load_flusight_ensemble_forecast(season, loc_code, r)
                     if not ensemble.empty:
                         x = ensemble["target_end_date"].values
-                        ax.plot(x, ensemble["value"].values, color='red', lw=2, label='FluSight-ensemble' if i == 0 else '')
+                        ax.plot(x, ensemble["value"].values, color='#333333', lw=2, ls=':', label='FluSight-ensemble' if i == 0 else '')
                         break
 
         # Styling
