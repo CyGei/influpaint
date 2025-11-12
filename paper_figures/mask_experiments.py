@@ -169,7 +169,13 @@ def plot_mask_experiments(mask_dir: str, forecast_date: str,
         masked_idx = np.where(masked_any)[0].tolist()
         if len(masked_idx) == 5:
             plot_indices = masked_idx
-        elif len(masked_idx) > 0:
+        elif len(masked_idx) > 5:
+            plot_indices = [gt.season_setup.locations.index(state_to_code("AL", gt.season_setup)), 
+                            gt.season_setup.locations.index(state_to_code("CA", gt.season_setup)), 
+                            gt.season_setup.locations.index(state_to_code("FL", gt.season_setup)), 
+                            gt.season_setup.locations.index(state_to_code("KY", gt.season_setup)), 
+                            gt.season_setup.locations.index(state_to_code("MD", gt.season_setup))]
+        elif 0 < len(masked_idx) < 5:
             plot_indices = masked_idx[:5]
         else:
             # fallback to provided states

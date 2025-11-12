@@ -204,6 +204,7 @@ def plot_weekly_incidence_correlation(inv_samples: np.ndarray,
         showfliers=False,
     )
     ax.set_ylabel('Correlation across U.S. states', fontsize=13)
+    ax.set_xlabel('')
     ax.grid(True, alpha=0.3, axis='y')
     sns.despine(ax=ax, trim=True)
 
