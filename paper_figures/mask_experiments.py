@@ -15,7 +15,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from influpaint.utils import ground_truth
 from influpaint.utils.helpers import flusight_quantile_pairs
 from .helpers import state_to_code
-from .config import IMAGE_SIZE, CHANNELS
+from .config import IMAGE_SIZE, CHANNELS, STATE_NAMES
 
 
 def recreate_mask(gt: ground_truth.GroundTruth, mask_name: str):
@@ -162,59 +162,39 @@ def plot_mask_experiments(mask_dir: str, forecast_date: str,
         arr = np.load(f_path)
         mk = np.load(m_path)
 
-        # Choose locations: prefer unmasked locations with interesting, diverse states
+        # Choose locations: if exactly 5 masked locations -> plot those; else pick up to 5 masked
         p_len = len(gt.season_setup.locations)
         masked_any = (mk[0, :arr.shape[2], :p_len] == 0).any(axis=0)
-        unmasked_idx = np.where(~masked_any)[0].tolist()
+        masked_idx = np.where(masked_any)[0].tolist()
+        if len(masked_idx) == 5:
+            plot_indices = masked_idx
+        elif len(masked_idx) > 0:
+            plot_indices = masked_idx[:5]
+        else:
+            # fallback to provided states
+            plot_indices = []
+            for st in (states if isinstance(states, (list, tuple)) else [states]):
+                code = state_to_code(st, gt.season_setup)
+                plot_indices.append(gt.season_setup.locations.index(code))
+            plot_indices = plot_indices[:5]
 
-        # Preferred states: geographically diverse, large population
-        preferred_states = ['CA', 'NY', 'TX', 'FL', 'IL', 'PA', 'OH', 'MI', 'WA', 'MA']
-
-        # Get abbreviation mapping
+        # Get full state names
         locdf = gt.season_setup.locations_df
         abbr_map = None
         if 'abbreviation' in locdf.columns:
             abbr_map = locdf.set_index('location_code')['abbreviation']
 
-        # Find preferred states that are unmasked
-        plot_indices = []
-        for pref_state in preferred_states:
-            for idx in unmasked_idx:
-                loc_code = str(gt.season_setup.locations[idx])
-                if abbr_map is not None:
-                    abbrev = abbr_map.get(loc_code, loc_code)
-                else:
-                    abbrev = loc_code
-                if str(abbrev).upper() == pref_state:
-                    plot_indices.append(idx)
-                    break
-            if len(plot_indices) >= 5:
-                break
-
-        # If we don't have 5 preferred states, fill with remaining unmasked locations
-        if len(plot_indices) < 5:
-            for idx in unmasked_idx:
-                if idx not in plot_indices:
-                    plot_indices.append(idx)
-                if len(plot_indices) >= 5:
-                    break
-
-        # Map to full names using location_name from locations_df
+        # Map to full names using STATE_NAMES
         labels = []
         for i in plot_indices:
             loc_code = str(gt.season_setup.locations[i])
-            # Try to get location_name from locations_df
-            if 'location_name' in locdf.columns:
-                name_match = locdf[locdf['location_code'] == loc_code]['location_name']
-                if not name_match.empty:
-                    labels.append(name_match.iloc[0])
-                    continue
-            # Fallback to abbreviation
             if abbr_map is not None:
                 abbrev = abbr_map.get(loc_code, loc_code)
             else:
                 abbrev = loc_code
-            labels.append(str(abbrev).upper())
+            # Get full name from STATE_NAMES, fallback to abbreviation
+            full_name = STATE_NAMES.get(str(abbrev).upper(), str(abbrev).upper())
+            labels.append(full_name)
 
         ncols = len(plot_indices)
         fig, axes = plt.subplots(1, ncols, figsize=(5*ncols, 4.5), dpi=200)
