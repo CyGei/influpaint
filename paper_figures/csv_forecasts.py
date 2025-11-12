@@ -333,8 +333,8 @@ def plot_csv_quantile_fans_multiseasons(seasons: list, base_dir: str, model_id: 
                         ax.plot(x, ensemble["value"].values, color='#333333', lw=2, ls=':', label='FluSight-ensemble' if i == 0 else '')
                         break
 
-        # Styling - use full location name from SeasonAxis
-        full_name = season_axis.get_location_name(loc_code)
+        # Styling - use full location name
+        full_name = "United States" if loc_code == 'US' else season_axis.get_location_name(loc_code)
         ax.text(0.02, 0.98, full_name, transform=ax.transAxes, va='top', ha='left', fontsize=11, fontweight='bold', bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
         ax.set_ylim(bottom=0)
         ax.set_xlim(x_left, x_right)
