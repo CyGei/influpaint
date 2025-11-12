@@ -23,6 +23,9 @@ from .config import (
 # Import helper functions
 from .helpers import load_unconditional_samples
 
+# Import data utilities
+from .data_utils import compute_historical_peak_threshold, filter_trajectories_by_peak
+
 # Import figure generation modules
 from . import unconditional_figures as uncond_figs
 from . import peak_analysis
@@ -326,19 +329,31 @@ def main():
     uncond_samples = load_unconditional_samples(UNCOND_SAMPLES_PATH)
     print(f"Loaded unconditional samples: {uncond_samples.shape}")
 
-    # Generate all figure types
+    # Filter unconditional samples based on peak threshold
+    print("\nFiltering unconditional samples by peak size...")
+    peak_threshold = compute_historical_peak_threshold(
+        seasons=[2022, 2023, 2024],
+        threshold_fraction=0.2
+    )
+    uncond_samples_filtered = filter_trajectories_by_peak(
+        uncond_samples,
+        season_axis,
+        peak_threshold
+    )
+
+    # Generate all figure types using filtered samples
     try:
-        generate_unconditional_figures(season_axis, uncond_samples)
+        generate_unconditional_figures(season_axis, uncond_samples_filtered)
     except Exception as e:
         print(f"Error generating unconditional figures: {e}")
 
     try:
-        generate_peak_analysis_figures(season_axis, uncond_samples)
+        generate_peak_analysis_figures(season_axis, uncond_samples_filtered)
     except Exception as e:
         print(f"Error generating peak analysis figures: {e}")
 
     try:
-        generate_correlation_figures(season_axis, uncond_samples)
+        generate_correlation_figures(season_axis, uncond_samples_filtered)
     except Exception as e:
         print(f"Error generating correlation figures: {e}")
 

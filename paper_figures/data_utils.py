@@ -195,6 +195,104 @@ def validate_samples_and_season_axis(samples: np.ndarray, season_axis: SeasonAxi
         )
 
 
+def compute_historical_peak_threshold(seasons: list[str] = None,
+                                       threshold_fraction: float = 0.2,
+                                       data_path: str = 'influpaint/data/nhsn_flusight_past.csv') -> float:
+    """Compute peak threshold from historical seasons.
+
+    Finds the lowest peak among specified historical seasons and returns
+    a fraction of that value as the threshold.
+
+    Args:
+        seasons: List of season years (e.g., [2022, 2023, 2024]).
+                If None, uses [2022, 2023, 2024].
+        threshold_fraction: Fraction of lowest peak to use as threshold (default 0.2 = 20%)
+        data_path: Path to historical data CSV file
+
+    Returns:
+        Threshold value (threshold_fraction * lowest_peak)
+    """
+    if seasons is None:
+        seasons = [2022, 2023, 2024]
+
+    gt_df = pd.read_csv(data_path)
+
+    # Find peaks across all locations for each season
+    season_peaks = []
+
+    for season_year in seasons:
+        season_data = gt_df[gt_df['fluseason'] == season_year]
+        if season_data.empty:
+            continue
+
+        season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
+
+        # Get peak for each location in this season
+        for loc in season_pivot.columns:
+            series = season_pivot[loc].dropna().values
+            if len(series) > 0:
+                peak = np.max(series)
+                season_peaks.append(peak)
+
+    if not season_peaks:
+        raise ValueError(f"No peaks found for seasons {seasons}")
+
+    # Find the lowest peak among all location-season combinations
+    lowest_peak = np.min(season_peaks)
+    threshold = threshold_fraction * lowest_peak
+
+    print(f"Historical peak threshold calculation:")
+    print(f"  Seasons analyzed: {seasons}")
+    print(f"  Lowest peak found: {lowest_peak:.2f}")
+    print(f"  Threshold ({threshold_fraction*100}% of lowest): {threshold:.2f}")
+
+    return threshold
+
+
+def filter_trajectories_by_peak(samples: np.ndarray,
+                                  season_axis: SeasonAxis,
+                                  peak_threshold: float) -> np.ndarray:
+    """Filter trajectories to keep only those with peak below threshold.
+
+    For each trajectory (across all locations and weeks), finds the maximum value (peak).
+    Returns only trajectories where the peak is less than the threshold.
+
+    Args:
+        samples: Array of shape (N, C, W, P) or (N, W, P)
+        season_axis: SeasonAxis object
+        peak_threshold: Maximum allowed peak value
+
+    Returns:
+        Filtered array with same shape but potentially fewer samples (N_filtered, C, W, P)
+    """
+    arr = normalize_samples_shape(samples)
+    n, c, w, p = arr.shape
+    real_weeks = get_real_weeks(arr)
+    num_locations = len(season_axis.locations)
+
+    # Compute peak for each trajectory
+    peaks = []
+    for sample_idx in range(n):
+        # Get max across all locations and weeks for this sample
+        sample_peak = np.max(arr[sample_idx, 0, :real_weeks, :num_locations])
+        peaks.append(sample_peak)
+
+    peaks = np.array(peaks)
+
+    # Filter to keep only trajectories with peak < threshold
+    mask = peaks < peak_threshold
+    filtered_samples = arr[mask]
+
+    print(f"Trajectory filtering by peak:")
+    print(f"  Original trajectories: {n}")
+    print(f"  Peak threshold: {peak_threshold:.2f}")
+    print(f"  Trajectories kept: {filtered_samples.shape[0]} ({100*filtered_samples.shape[0]/n:.1f}%)")
+    print(f"  Peak range in kept trajectories: [{np.min(peaks[mask]):.2f}, {np.max(peaks[mask]):.2f}]")
+    print(f"  Peak range in removed trajectories: [{np.min(peaks[~mask]) if np.any(~mask) else 0:.2f}, {np.max(peaks[~mask]) if np.any(~mask) else 0:.2f}]")
+
+    return filtered_samples
+
+
 # Export commonly used constants
 __all__ = [
     'normalize_samples_shape',
@@ -207,6 +305,8 @@ __all__ = [
     'compute_quantile_curves',
     'compute_median',
     'validate_samples_and_season_axis',
+    'compute_historical_peak_threshold',
+    'filter_trajectories_by_peak',
     'flusight_quantiles',
     'flusight_quantile_pairs',
 ]
