@@ -26,6 +26,7 @@ from .helpers import load_unconditional_samples
 # Import figure generation modules
 from . import unconditional_figures as uncond_figs
 from . import peak_analysis
+from . import correlation_analysis
 from . import csv_forecasts
 from . import npy_forecasts
 from . import mask_experiments
@@ -271,6 +272,27 @@ def generate_npy_forecast_figures(season_axis):
     print("NPY forecast figures complete.")
 
 
+def generate_correlation_figures(season_axis, uncond_samples):
+    """Generate correlation analysis figures.
+
+    Args:
+        season_axis: SeasonAxis object
+        uncond_samples: Unconditional samples array
+    """
+    print("Generating correlation analysis figures...")
+
+    # Weekly incidence correlation
+    fig_correlation = correlation_analysis.plot_weekly_incidence_correlation(
+        inv_samples=uncond_samples,
+        season_axis=season_axis,
+        save_path=os.path.join(FIG_DIR, f"{_MODEL_NUM}_weekly_incidence_correlation.png"),
+        n_permutations=100,
+    )
+    plt.close(fig_correlation)
+
+    print("Correlation analysis figures complete.")
+
+
 def generate_mask_experiment_figures():
     """Generate mask experiment figures."""
     print("Generating mask experiment figures...")
@@ -314,6 +336,11 @@ def main():
         generate_peak_analysis_figures(season_axis, uncond_samples)
     except Exception as e:
         print(f"Error generating peak analysis figures: {e}")
+
+    try:
+        generate_correlation_figures(season_axis, uncond_samples)
+    except Exception as e:
+        print(f"Error generating correlation figures: {e}")
 
     try:
         generate_csv_forecast_figures(season_axis)
