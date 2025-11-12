@@ -41,6 +41,8 @@ def plot_peak_distributions_comparison(inv_samples: np.ndarray,
     historical_peaks = {'timing': [], 'size': [], 'season': []}
 
     for season_year in sorted(gt_df['fluseason'].unique()):
+        if season_year == 2021:  # Skip 2021-2022 season (incomplete data)
+            continue
         season_data = gt_df[gt_df['fluseason'] == season_year]
         season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
         season_label = f"{season_year}-{season_year+1}"
@@ -165,6 +167,8 @@ def plot_peak_distributions_by_location(inv_samples: np.ndarray,
         historical_peaks = {'timing': [], 'size': [], 'season': []}
 
         for season_year in sorted(gt_df['fluseason'].unique()):
+            if season_year == 2021:  # Skip 2021-2022 season (incomplete data)
+                continue
             season_data = gt_df[gt_df['fluseason'] == season_year]
             season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
             season_label = f"{season_year}-{season_year+1}"
@@ -293,6 +297,8 @@ def plot_peak_distributions_by_metric(inv_samples: np.ndarray,
         historical_peaks = {'timing': [], 'size': [], 'season': []}
 
         for season_year in sorted(gt_df['fluseason'].unique()):
+            if season_year == 2021:  # Skip 2021-2022 season (incomplete data)
+                continue
             season_data = gt_df[gt_df['fluseason'] == season_year]
             season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
             season_label = f"{season_year}-{season_year+1}"

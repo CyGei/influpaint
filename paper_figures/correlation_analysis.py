@@ -179,8 +179,10 @@ def compute_observed_correlation(season_axis: SeasonAxis,
 
     correlations = []
 
-    # Get the most recent n_seasons
-    seasons = sorted(gt_df['fluseason'].unique())[-n_seasons:]
+    # Get the most recent n_seasons (excluding 2021-2022 season due to incomplete data)
+    all_seasons = sorted(gt_df['fluseason'].unique())
+    all_seasons = [s for s in all_seasons if s != 2021]  # Exclude 2021-2022 season
+    seasons = all_seasons[-n_seasons:]
 
     for season_year in seasons:
         season_data = gt_df[gt_df['fluseason'] == season_year]

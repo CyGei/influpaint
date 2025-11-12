@@ -339,10 +339,12 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
     fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
-    # Load historical data
+    # Load historical data (excluding 2021-2022 season due to incomplete data)
     gt_df = pd.read_csv('influpaint/data/nhsn_flusight_past.csv')
     gt_plot_data = {}
     for season in gt_df['fluseason'].unique():
+        if season == 2021:  # Skip 2021-2022 season (incomplete data)
+            continue
         season_data = gt_df[gt_df['fluseason'] == season]
         season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
         gt_plot_data[season] = season_pivot
@@ -480,10 +482,12 @@ def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
     fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
-    # Load historical data
+    # Load historical data (excluding 2021-2022 season due to incomplete data)
     gt_df = pd.read_csv('influpaint/data/nhsn_flusight_past.csv')
     gt_plot_data = {}
     for season in gt_df['fluseason'].unique():
+        if season == 2021:  # Skip 2021-2022 season (incomplete data)
+            continue
         season_data = gt_df[gt_df['fluseason'] == season]
         season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
         gt_plot_data[season] = season_pivot
@@ -579,10 +583,12 @@ def plot_unconditional_states_with_history_alt(inv_samples: np.ndarray,
     fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
     axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
 
-    # Load historical data
+    # Load historical data (excluding 2021-2022 season due to incomplete data)
     gt_df = pd.read_csv('influpaint/data/nhsn_flusight_past.csv')
     gt_plot_data = {}
     for season in gt_df['fluseason'].unique():
+        if season == 2021:  # Skip 2021-2022 season (incomplete data)
+            continue
         season_data = gt_df[gt_df['fluseason'] == season]
         season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
         gt_plot_data[season] = season_pivot
