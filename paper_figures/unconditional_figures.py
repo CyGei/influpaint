@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from influpaint.utils import SeasonAxis
 import influpaint.utils.plotting as idplots
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from .data_utils import (
     normalize_samples_shape, get_real_weeks, get_state_timeseries,
@@ -383,6 +384,133 @@ def plot_unconditional_states_with_history(inv_samples: np.ndarray,
                     ax.plot(gt_series.index, gt_series.values,
                            color='black', lw=2.0, alpha=0.9, ls=ls, zorder=10,
                            label=season_key if i == 0 else None)
+
+        state_name = STATE_NAMES.get(st.upper(), st.upper())
+        ax.text(0.02, 0.98, state_name, transform=ax.transAxes, va='top', ha='left',
+                fontsize=12, fontweight='bold',
+                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none'))
+        ax.set_xlim(1, real_weeks)
+        ax.set_ylim(bottom=0)
+        ax.set_xticks([month_weeks[j] for j in range(0, len(month_weeks), 2)])
+        ax.set_xticklabels([month_labels[j] for j in range(0, len(month_labels), 2)])
+        ax.set_xlabel('Season month')
+        if i % ncols == 0:
+            ax.set_ylabel('Incidence')
+        ax.grid(True, alpha=0.3)
+        sns.despine(ax=ax, trim=True)
+
+        if i == 0:
+            ax.legend(loc='upper right', fontsize=8, framealpha=0.8)
+
+    for j in range(len(axes_list)):
+        if j >= n_states:
+            axes_list[j].set_axis_off()
+
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
+    return fig
+
+
+def add_trajectory_inset(ax, weeks, trajectory, color):
+    """Add a small inset showing a single trajectory.
+
+    Args:
+        ax: Matplotlib axis to add inset to
+        weeks: Array of week numbers
+        trajectory: Single trajectory to plot
+        color: Color for the trajectory
+    """
+    # Create inset axis in upper left (30% size)
+    axins = inset_axes(ax, width="32.5%", height="32.5%", loc='upper left',
+                      bbox_to_anchor=(0.02, 0.02, 1, 1), bbox_transform=ax.transAxes)
+
+    # Plot the trajectory
+    axins.plot(weeks, trajectory, color=color, lw=2.0, alpha=0.9)
+    axins.set_xlim(weeks[0], weeks[-1])
+    axins.set_ylim(bottom=0, top=trajectory.max() * 1.1)
+
+    # Minimal styling
+    axins.set_xticks([])
+    axins.set_yticks([])
+    axins.grid(True, alpha=0.3)
+
+    # Remove spines for cleaner look
+    for spine in axins.spines.values():
+        spine.set_visible(False)
+
+
+def plot_unconditional_states_with_history_inlet(inv_samples: np.ndarray,
+                                                   season_axis: SeasonAxis,
+                                                   states: list[str],
+                                                   trajectory_idx: int = 0,
+                                                   plot_median: bool = False,
+                                                   save_path: str | None = None):
+    """Plot unconditional samples with historical data and a single trajectory in an inset.
+
+    Args:
+        inv_samples: (N, 1, weeks, places) or (N, weeks, places)
+        season_axis: SeasonAxis object
+        states: list of state codes/abbrevs
+        trajectory_idx: which sample trajectory to show in inset
+        plot_median: whether to plot median on main graph
+        save_path: optional path to save the figure
+
+    Returns:
+        matplotlib Figure object
+    """
+    arr = normalize_samples_shape(inv_samples)
+    real_weeks = get_real_weeks(arr)
+    weeks = np.arange(1, real_weeks + 1)
+
+    n_states = len(states)
+    ncols = min(3, n_states)
+    nrows = int(np.ceil(n_states / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 4*nrows), dpi=200, sharey=False)
+    axes_list = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
+
+    # Load historical data
+    gt_df = pd.read_csv('influpaint/data/nhsn_flusight_past.csv')
+    gt_plot_data = {}
+    for season in gt_df['fluseason'].unique():
+        season_data = gt_df[gt_df['fluseason'] == season]
+        season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
+        gt_plot_data[season] = season_pivot
+
+    sorted_seasons = sorted(gt_plot_data.keys())
+    line_styles = ['-', '--', '-.', ':']
+    month_labels = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul']
+    month_weeks = [1, 5, 9, 13, 17, 22, 26, 31, 35, 40, 44, 48]
+
+    for i, st in enumerate(states):
+        ax = axes_list[i]
+        ts = get_state_timeseries(arr, st, season_axis)
+        loc_code = state_to_code(st, season_axis)
+        color = sns.color_palette('Set2', n_colors=n_states)[i % n_states]
+
+        # Quantile bands only
+        for lo_curve, hi_curve in compute_quantile_curves(ts):
+            ax.fill_between(weeks, lo_curve, hi_curve, color=color, alpha=0.08, lw=0, zorder=0)
+
+        # Median (optional)
+        if plot_median:
+            med = compute_median(ts)
+            ax.plot(weeks, med, color=color, lw=2.5, zorder=2)
+
+        # Historical data
+        for j, season_key in enumerate(sorted_seasons):
+            season_data = gt_plot_data[season_key]
+            if loc_code in season_data.columns:
+                gt_series = season_data[loc_code].dropna()
+                if not gt_series.empty:
+                    ls = line_styles[j % len(line_styles)]
+                    ax.plot(gt_series.index, gt_series.values,
+                           color='black', lw=2.0, alpha=0.9, ls=ls, zorder=10,
+                           label=season_key if i == 0 else None)
+
+        # Add trajectory inset
+        traj_idx = min(trajectory_idx, ts.shape[0] - 1)
+        add_trajectory_inset(ax, weeks, ts[traj_idx], color)
 
         state_name = STATE_NAMES.get(st.upper(), st.upper())
         ax.text(0.02, 0.98, state_name, transform=ax.transAxes, va='top', ha='left',

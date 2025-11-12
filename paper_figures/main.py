@@ -101,6 +101,17 @@ def generate_unconditional_figures(season_axis, uncond_samples):
     )
     plt.close(fig_hist)
 
+    # Unconditional with historical overlay and trajectory inset
+    fig_hist_inlet = uncond_figs.plot_unconditional_states_with_history_inlet(
+        inv_samples=uncond_samples,
+        season_axis=season_axis,
+        states=['NC', 'CA', 'NY', 'TX', 'FL', 'MT'],
+        trajectory_idx=0,
+        plot_median=False,
+        save_path=os.path.join(FIG_DIR, f"{_MODEL_NUM}_uncond_states_with_history_inlet.png"),
+    )
+    plt.close(fig_hist_inlet)
+
     fig_hist_alt = uncond_figs.plot_unconditional_states_with_history_alt(
         inv_samples=uncond_samples,
         season_axis=season_axis,
