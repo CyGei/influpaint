@@ -329,16 +329,17 @@ def main():
     uncond_samples = load_unconditional_samples(UNCOND_SAMPLES_PATH)
     print(f"Loaded unconditional samples: {uncond_samples.shape}")
 
-    # Filter unconditional samples based on peak threshold
-    print("\nFiltering unconditional samples by peak size...")
-    peak_threshold = compute_historical_peak_threshold(
+    # Filter unconditional samples based on peak threshold (per location)
+    print("\nFiltering unconditional samples to remove blank/low trajectories...")
+    peak_thresholds = compute_historical_peak_threshold(
+        season_axis=season_axis,
         seasons=[2022, 2023, 2024],
         threshold_fraction=0.2
     )
     uncond_samples_filtered = filter_trajectories_by_peak(
         uncond_samples,
         season_axis,
-        peak_threshold
+        peak_thresholds
     )
 
     # Generate all figure types using filtered samples

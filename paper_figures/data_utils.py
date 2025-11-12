@@ -195,72 +195,79 @@ def validate_samples_and_season_axis(samples: np.ndarray, season_axis: SeasonAxi
         )
 
 
-def compute_historical_peak_threshold(seasons: list[str] = None,
+def compute_historical_peak_threshold(season_axis: SeasonAxis,
+                                       seasons: list[int] = None,
                                        threshold_fraction: float = 0.2,
-                                       data_path: str = 'influpaint/data/nhsn_flusight_past.csv') -> float:
-    """Compute peak threshold from historical seasons.
+                                       data_path: str = 'influpaint/data/nhsn_flusight_past.csv') -> np.ndarray:
+    """Compute peak threshold per location from historical seasons.
 
-    Finds the lowest peak among specified historical seasons and returns
-    a fraction of that value as the threshold.
+    For each location, finds the lowest peak across specified historical seasons
+    and returns a fraction of that value as the threshold for that location.
 
     Args:
+        season_axis: SeasonAxis object for location mapping
         seasons: List of season years (e.g., [2022, 2023, 2024]).
                 If None, uses [2022, 2023, 2024].
         threshold_fraction: Fraction of lowest peak to use as threshold (default 0.2 = 20%)
         data_path: Path to historical data CSV file
 
     Returns:
-        Threshold value (threshold_fraction * lowest_peak)
+        Array of threshold values per location (shape: num_locations,)
     """
     if seasons is None:
         seasons = [2022, 2023, 2024]
 
     gt_df = pd.read_csv(data_path)
+    num_locations = len(season_axis.locations)
+    thresholds = np.zeros(num_locations)
 
-    # Find peaks across all locations for each season
-    season_peaks = []
+    # For each location, find the lowest peak across all seasons
+    for loc_idx, loc_code in enumerate(season_axis.locations):
+        location_peaks = []
 
-    for season_year in seasons:
-        season_data = gt_df[gt_df['fluseason'] == season_year]
-        if season_data.empty:
-            continue
+        for season_year in seasons:
+            season_data = gt_df[gt_df['fluseason'] == season_year]
+            if season_data.empty:
+                continue
 
-        season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
+            season_pivot = season_data.pivot(columns='location_code', values='value', index='season_week')
 
-        # Get peak for each location in this season
-        for loc in season_pivot.columns:
-            series = season_pivot[loc].dropna().values
-            if len(series) > 0:
-                peak = np.max(series)
-                season_peaks.append(peak)
+            # Get peak for this location in this season
+            if loc_code in season_pivot.columns:
+                series = season_pivot[loc_code].dropna().values
+                if len(series) > 0:
+                    peak = np.max(series)
+                    location_peaks.append(peak)
 
-    if not season_peaks:
-        raise ValueError(f"No peaks found for seasons {seasons}")
+        if location_peaks:
+            # Find the lowest peak for this location across seasons
+            lowest_peak = np.min(location_peaks)
+            thresholds[loc_idx] = threshold_fraction * lowest_peak
+        else:
+            # If no data for this location, set a very low threshold
+            thresholds[loc_idx] = 0.0
 
-    # Find the lowest peak among all location-season combinations
-    lowest_peak = np.min(season_peaks)
-    threshold = threshold_fraction * lowest_peak
-
-    print(f"Historical peak threshold calculation:")
+    print(f"Historical peak threshold calculation (per location):")
     print(f"  Seasons analyzed: {seasons}")
-    print(f"  Lowest peak found: {lowest_peak:.2f}")
-    print(f"  Threshold ({threshold_fraction*100}% of lowest): {threshold:.2f}")
+    print(f"  Threshold range: [{np.min(thresholds):.2f}, {np.max(thresholds):.2f}]")
+    print(f"  Mean threshold: {np.mean(thresholds):.2f}")
+    print(f"  Threshold fraction: {threshold_fraction*100}% of lowest peak per location")
 
-    return threshold
+    return thresholds
 
 
 def filter_trajectories_by_peak(samples: np.ndarray,
                                   season_axis: SeasonAxis,
-                                  peak_threshold: float) -> np.ndarray:
-    """Filter trajectories to keep only those with peak below threshold.
+                                  peak_thresholds: np.ndarray) -> np.ndarray:
+    """Filter trajectories to remove those with unrealistically low peaks.
 
-    For each trajectory (across all locations and weeks), finds the maximum value (peak).
-    Returns only trajectories where the peak is less than the threshold.
+    For each trajectory and location, finds the maximum value (peak) for that location.
+    Removes trajectories where ANY location has a peak below that location's threshold.
 
     Args:
         samples: Array of shape (N, C, W, P) or (N, W, P)
         season_axis: SeasonAxis object
-        peak_threshold: Maximum allowed peak value
+        peak_thresholds: Array of minimum allowed peak values per location (shape: num_locations,)
 
     Returns:
         Filtered array with same shape but potentially fewer samples (N_filtered, C, W, P)
@@ -270,25 +277,36 @@ def filter_trajectories_by_peak(samples: np.ndarray,
     real_weeks = get_real_weeks(arr)
     num_locations = len(season_axis.locations)
 
-    # Compute peak for each trajectory
-    peaks = []
+    # Check each trajectory
+    keep_mask = np.ones(n, dtype=bool)
+
     for sample_idx in range(n):
-        # Get max across all locations and weeks for this sample
-        sample_peak = np.max(arr[sample_idx, 0, :real_weeks, :num_locations])
-        peaks.append(sample_peak)
+        # For each location, check if peak is above threshold
+        for loc_idx in range(num_locations):
+            location_data = arr[sample_idx, 0, :real_weeks, loc_idx]
+            location_peak = np.max(location_data)
 
-    peaks = np.array(peaks)
+            # Remove trajectory if ANY location has peak below threshold
+            if location_peak < peak_thresholds[loc_idx]:
+                keep_mask[sample_idx] = False
+                break  # No need to check other locations for this sample
 
-    # Filter to keep only trajectories with peak < threshold
-    mask = peaks < peak_threshold
-    filtered_samples = arr[mask]
+    filtered_samples = arr[keep_mask]
 
-    print(f"Trajectory filtering by peak:")
+    # Statistics
+    n_removed = n - filtered_samples.shape[0]
+    print(f"Trajectory filtering by peak (removing blank/low trajectories):")
     print(f"  Original trajectories: {n}")
-    print(f"  Peak threshold: {peak_threshold:.2f}")
+    print(f"  Trajectories removed: {n_removed} ({100*n_removed/n:.1f}%)")
     print(f"  Trajectories kept: {filtered_samples.shape[0]} ({100*filtered_samples.shape[0]/n:.1f}%)")
-    print(f"  Peak range in kept trajectories: [{np.min(peaks[mask]):.2f}, {np.max(peaks[mask]):.2f}]")
-    print(f"  Peak range in removed trajectories: [{np.min(peaks[~mask]) if np.any(~mask) else 0:.2f}, {np.max(peaks[~mask]) if np.any(~mask) else 0:.2f}]")
+
+    if filtered_samples.shape[0] > 0:
+        # Show peak stats for kept trajectories
+        kept_peaks = []
+        for sample_idx in range(filtered_samples.shape[0]):
+            max_peak = np.max(filtered_samples[sample_idx, 0, :real_weeks, :num_locations])
+            kept_peaks.append(max_peak)
+        print(f"  Peak range in kept trajectories: [{np.min(kept_peaks):.2f}, {np.max(kept_peaks):.2f}]")
 
     return filtered_samples
 
