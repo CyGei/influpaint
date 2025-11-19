@@ -45,7 +45,7 @@ def plot_npy_multi_date_two_seasons(base_dir: str, model_id: str, config: str,
     """
     states = state if isinstance(state, (list, tuple)) else [state]
     nrows, ncols = len(seasons), len(states)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(4*ncols, 3.5*nrows), dpi=200, sharey=False, sharex=False)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5*ncols, 5*nrows), dpi=200, sharey=False, sharex=False)
     # Normalize axes to 2D array shape (nrows, ncols)
     if nrows == 1 and ncols == 1:
         axes2 = np.array([[axes]])

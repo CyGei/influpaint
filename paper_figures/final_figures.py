@@ -225,6 +225,7 @@ def figure2_csv_forecasts_two_seasons(season_axis):
     from .config import SEASON_XLIMS
     import seaborn as sns
     import pandas as pd
+    import matplotlib.dates as mdates
 
     seasons = ['2023-2024', '2024-2025']
 
@@ -325,7 +326,13 @@ def figure2_csv_forecasts_two_seasons(season_axis):
             ax.grid(True, alpha=0.3)
             sns.despine(ax=ax, trim=True)
             ax.set_xlim(left_bound, right_bound)
-            format_date_axis(ax)
+
+            # Custom date formatting: "Dec 25" format with flat labels
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
+            for label in ax.get_xticklabels():
+                label.set_rotation(0)
+                label.set_horizontalalignment('center')
 
     # Add panel labels
     add_panel_label(axes[0, 0], 'A', x=-0.15, y=1.05)
@@ -383,10 +390,14 @@ def figure3_npy_forecasts_two_seasons(season_axis):
     # Bottom row (2024-2025) - first axis in second row
     add_panel_label(axes[ncols], 'B', x=-0.15, y=1.05)
 
-    # Update date formatting for all axes: "Dec 2025" format
-    from .helpers import format_date_axis
+    # Update date formatting for all axes: "Dec 25" format with flat labels
+    import matplotlib.dates as mdates
     for ax in axes:
-        format_date_axis(ax)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
+        for label in ax.get_xticklabels():
+            label.set_rotation(0)
+            label.set_horizontalalignment('center')
 
     # Save figure
     save_path = os.path.join(FIG_DIR, f"{_MODEL_NUM}_figure3_npy_forecasts_two_seasons.png")
