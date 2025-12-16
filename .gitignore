@@ -35,3 +35,6 @@ __pycache__/
 
 .vscode/
 .aider*
+
+#.Renviron
+.Renviron
